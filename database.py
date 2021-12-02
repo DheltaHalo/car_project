@@ -45,7 +45,6 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
             info = sesh.get(url)
             r = requests.get(url + str(page), headers=headers)
             html = r.text
-            print(url + str(page))
             if not("No hemos encontrado resultados" in html or html == ""):
                 if html_bool:
                     start = '<script>window.__INITIAL_PROPS__ = JSON.parse("'
@@ -132,9 +131,6 @@ def create_all(path: str, links: dict, n_pages: int):
 
         for item in links[parent]:
             print(f"\t{item}")
-            if item != "ASTON_MARTIN":
-                continue
-
             if len(links[parent]) == 1:
                 pass #get_url(parent_path, links[parent][item], n_pages)
 
@@ -249,9 +245,9 @@ def main(n_pages: int):
     create_all(files_path, urls, n_pages)
     df = create_pandas(files_path)
     df[0].to_csv("car_data.csv", index=False)
-    subprocess.call(['chmod', '7777', 'car_data.csv'])
+    if os.name != "nt":
+        subprocess.call(['chmod', '7777', 'car_data.csv'])
 
-    upload_file_to_dropbox(token, df[1], '/database/models')
     upload_file_to_dropbox(token, ["car_data.csv"], '/database')
 
 if __name__ == "__main__":
