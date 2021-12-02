@@ -45,79 +45,80 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
             info = sesh.get(url)
             r = requests.get(url + str(page), headers=headers)
             html = r.text
-            if html == "":
-                break
-            else:
-                if not("No hemos encontrado resultados" in html or html == ""):
-                    if html_bool:
-                        start = '<script>window.__INITIAL_PROPS__ = JSON.parse("'
-                        end = '");</script><script>window.__INITIAL_CONTEXT_VALUE'
-                        fixedtext = html[html.find(start)+len(start):html.rfind(end)].strip().replace('\\','').replace('": "{"',": {").replace('":"{"','":{"').replace('}"},','}},').replace('}"}','}}')
-                        return fixedtext
+            print(url + str(page))
+            if not("No hemos encontrado resultados" in html or html == ""):
+                if html_bool:
+                    start = '<script>window.__INITIAL_PROPS__ = JSON.parse("'
+                    end = '");</script><script>window.__INITIAL_CONTEXT_VALUE'
+                    fixedtext = html[html.find(start)+len(start):html.rfind(end)].strip().replace('\\','').replace('": "{"',": {").replace('":"{"','":{"').replace('}"},','}},').replace('}"}','}}')
+                    return fixedtext
 
-                    else:
-                        # We parse the text file to anice json version
-                        output = []
-                        start = '<script>window.__INITIAL_PROPS__ = JSON.parse("'
-                        end = '");</script><script>window.__INITIAL_CONTEXT_VALUE'
+                else:
+                    # We parse the text file to anice json version
+                    output = []
+                    start = '<script>window.__INITIAL_PROPS__ = JSON.parse("'
+                    end = '");</script><script>window.__INITIAL_CONTEXT_VALUE'
 
-                        fixedtext = html[html.find(start)+len(start):html.rfind(end)].strip().replace('\\','').replace('": "{"',": {").replace('":"{"','":{"').replace('}"},','}},').replace('}"}','}}')
+                    fixedtext = html[html.find(start)+len(start):html.rfind(end)].strip().replace('\\','').replace('": "{"',": {").replace('":"{"','":{"').replace('}"},','}},').replace('}"}','}}')
 
-                        # We filter the data
+                    # We filter the data
+                    try:
+                        data = json.loads(fixedtext)
+
+                    except JSONDecodeError:
+                        openBr = 0
+                        pos = fixedtext.index("initialResults")
+                        new_text = fixedtext[pos:]
+                        for k in range(len(new_text)):
+                            if new_text[k] == "{":
+                                openBr += 1
+
+
+                            if new_text[k] == "}":
+                                openBr -= 1
+
+                                if openBr == 0:
+                                    break
+                            
+                        match = [x for x in re.findall(r'(?<=,"title":")(.+?)(?=",")', fixedtext[pos:k+1+pos]) if "\"" in x]
+                        for error in match:
+                            fixedtext = fixedtext.replace(error,  error.replace("\"", ""))
+
+                        data = json.loads(fixedtext)
+
+                    for car in data['initialResults']['items']:
+                        output.append(car)
+                        keys_list = list(output[0].keys())
+
+                    import_keys = ["marca", "title", "year", "phone", "isProfessional", "url"]
+
+                    remove_key = []
+
+                    for n, val in enumerate(output):
+                        for key in list(val.keys()):
+                            if not(key in import_keys):
+                                val.pop(key, None)
+                            else:
+                                if key == "title":
+                                    val["marca"] = val[key].split(" ")[0]
+
                         try:
-                            data = json.loads(fixedtext)
+                            output[n] = {k: val[k] for k in import_keys}
+                        except KeyError:
+                            pass
 
-                        except JSONDecodeError:
-                            openBr = 0
-                            pos = fixedtext.index("initialResults")
-                            new_text = fixedtext[pos:]
-                            for k in range(len(new_text)):
-                                if new_text[k] == "{":
-                                    openBr += 1
+                    keys = output[0].keys()
 
+                    # We save the data
+                    with open(f'{path}/{page}.csv', 'w+', newline='') as output_file:
+                        dict_writer = csv.DictWriter(output_file, keys)
+                        dict_writer.writeheader()
+                        dict_writer.writerows(output)
+                    if os.name != "nt":
+                        subprocess.call(['chmod', '7777', f'{path}/{page}.csv'])
 
-                                if new_text[k] == "}":
-                                    openBr -= 1
-
-                                    if openBr == 0:
-                                        break
-                                
-                            match = [x for x in re.findall(r'(?<=,"title":")(.+?)(?=",")', fixedtext[pos:k+1+pos]) if "\"" in x]
-                            for error in match:
-                                fixedtext = fixedtext.replace(error,  error.replace("\"", ""))
-
-                            data = json.loads(fixedtext)
-
-                        for car in data['initialResults']['items']:
-                            output.append(car)
-                            keys_list = list(output[0].keys())
-
-                        import_keys = ["marca", "title", "year", "phone", "isProfessional", "url"]
-
-                        remove_key = []
-
-                        for n, val in enumerate(output):
-                            for key in list(val.keys()):
-                                if not(key in import_keys):
-                                    val.pop(key, None)
-                                else:
-                                    if key == "title":
-                                        val["marca"] = val[key].split(" ")[0]
-
-                            try:
-                                output[n] = {k: val[k] for k in import_keys}
-                            except KeyError:
-                                pass
-
-                        keys = output[0].keys()
-
-                        # We save the data
-                        with open(f'{path}/{page}.csv', 'w+', newline='') as output_file:
-                            dict_writer = csv.DictWriter(output_file, keys)
-                            dict_writer.writeheader()
-                            dict_writer.writerows(output)
-                        if os.name != "nt":
-                            subprocess.call(['chmod', '7777', f'{path}/{page}.csv'])
+            else:
+                break
 
 def create_all(path: str, links: dict, n_pages: int):
     for parent in links:
@@ -131,6 +132,9 @@ def create_all(path: str, links: dict, n_pages: int):
 
         for item in links[parent]:
             print(f"\t{item}")
+            if item != "ASTON_MARTIN":
+                continue
+
             if len(links[parent]) == 1:
                 pass #get_url(parent_path, links[parent][item], n_pages)
 
@@ -142,8 +146,7 @@ def create_all(path: str, links: dict, n_pages: int):
                         subprocess.call(['chmod', '7777', child_path])
 
                 if len(links[parent][item]) == 1:
-                    if int(item) >= 2014:
-                        get_url(child_path, links[parent][item]["url"], n_pages)
+                    get_url(child_path, links[parent][item]["url"], n_pages)
                 
                 else:
                     for name in links[parent][item]["models"]:
