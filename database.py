@@ -142,7 +142,8 @@ def create_all(path: str, links: dict, n_pages: int):
                         subprocess.call(['chmod', '7777', child_path])
 
                 if len(links[parent][item]) == 1:
-                    get_url(child_path, links[parent][item]["url"], n_pages)
+                    if int(item) >= 2014:
+                        get_url(child_path, links[parent][item]["url"], n_pages)
                 
                 else:
                     for name in links[parent][item]["models"]:
@@ -251,10 +252,6 @@ def main(n_pages: int):
     upload_file_to_dropbox(token, ["car_data.csv"], '/database')
 
 if __name__ == "__main__":
-    try: 
-        # sol = int(input("Número de páginas?\nRespuesta: "))
-        main(1000)
-    
-    except ValueError:
-        print("Bad page")
-    
+    # sol = int(input("Número de páginas?\nRespuesta: "))
+    main(1000)
+
