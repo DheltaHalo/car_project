@@ -68,7 +68,6 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
                             data = json.loads(fixedtext)
 
                         except JSONDecodeError:
-                            print(1)
                             openBr = 0
                             pos = fixedtext.index("initialResults")
                             new_text = fixedtext[pos:]
@@ -105,7 +104,10 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
                                     if key == "title":
                                         val["marca"] = val[key].split(" ")[0]
 
-                            output[n] = {k: val[k] for k in import_keys}
+                            try:
+                                output[n] = {k: val[k] for k in import_keys}
+                            except KeyError:
+                                pass
 
                         keys = output[0].keys()
 
@@ -137,7 +139,7 @@ def create_all(path: str, links: dict, n_pages: int):
                 if not(os.path.isdir(child_path)):
                     os.mkdir(child_path)
                     if os.name != "nt":
-                                subprocess.call(['chmod', '7777', child_path])
+                        subprocess.call(['chmod', '7777', child_path])
 
                 if len(links[parent][item]) == 1:
                     get_url(child_path, links[parent][item]["url"], n_pages)
