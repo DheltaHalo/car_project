@@ -260,5 +260,5 @@ def main(n_pages: int):
 
 if __name__ == "__main__":
     # sol = int(input("Número de páginas?\nRespuesta: "))
-    main(1)
+    main(1000)
 
