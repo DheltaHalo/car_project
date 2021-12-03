@@ -43,14 +43,15 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
 
             # We create the session and extract the html
             while True:
-                sleep(300)
                 try:
                     info = sesh.get(url)
                     r = requests.get(url + str(page), headers=headers)
                     
                     break
+
                 except requests.exceptions.ConnectionError:
                     print("Connection error")
+                    sleep(300)
                     pass
             html = r.text
             if not("No hemos encontrado resultados" in html or html == ""):
