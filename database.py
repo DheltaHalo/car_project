@@ -141,7 +141,7 @@ def create_all(path: str, links: dict, n_pages: int):
         for item in links[parent]:
             print(f"\t{item}")
             if len(links[parent]) == 1:
-                pass #get_url(parent_path, links[parent][item], n_pages)
+                get_url(parent_path, links[parent][item], n_pages)
 
             else:
                 child_path = f'{parent_path}/{item}'
