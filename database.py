@@ -42,8 +42,16 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
             sleep(3)
 
             # We create the session and extract the html
-            info = sesh.get(url)
-            r = requests.get(url + str(page), headers=headers)
+            while True:
+                sleep(300)
+                try:
+                    info = sesh.get(url)
+                    r = requests.get(url + str(page), headers=headers)
+                    
+                    break
+                except requests.exceptions.ConnectionError:
+                    print("Connection error")
+                    pass
             html = r.text
             if not("No hemos encontrado resultados" in html or html == ""):
                 if html_bool:
@@ -252,5 +260,5 @@ def main(n_pages: int):
 
 if __name__ == "__main__":
     # sol = int(input("Número de páginas?\nRespuesta: "))
-    main(1000)
+    main(1)
 
