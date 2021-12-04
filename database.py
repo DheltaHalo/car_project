@@ -39,6 +39,7 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
             url += "&pg="
 
         for page in range(1, n_pages + 1):
+            print(f"\t\t{page}")
             sleep(3)
 
             # We create the session and extract the html
@@ -118,12 +119,15 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
                     keys = output[0].keys()
 
                     # We save the data
-                    with open(f'{path}/{page}.csv', 'w+', newline='') as output_file:
-                        dict_writer = csv.DictWriter(output_file, keys)
-                        dict_writer.writeheader()
-                        dict_writer.writerows(output)
-                    if os.name != "nt":
-                        subprocess.call(['chmod', '7777', f'{path}/{page}.csv'])
+                    try:
+                        with open(f'{path}/{page}.csv', 'w+', newline='') as output_file:
+                            dict_writer = csv.DictWriter(output_file, keys)
+                            dict_writer.writeheader()
+                            dict_writer.writerows(output)
+                        if os.name != "nt":
+                            subprocess.call(['chmod', '7777', f'{path}/{page}.csv'])
+                    except:
+                        pass
 
             else:
                 break
@@ -141,7 +145,7 @@ def create_all(path: str, links: dict, n_pages: int):
         for item in links[parent]:
             print(f"\t{item}")
             if len(links[parent]) == 1:
-                get_url(parent_path, links[parent][item], n_pages)
+                pass #get_url(parent_path, links[parent][item], n_pages)
 
             else:
                 child_path = f'{parent_path}/{item}'
