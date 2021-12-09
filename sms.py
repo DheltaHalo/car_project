@@ -1,9 +1,12 @@
 import requests
 import hashlib
 import pandas as pd
+from time import sleep
 from datetime import date, datetime
 from tkinter import filedialog
 from tkinter import *
+from colorama import init, Fore
+init()
 
 def get_columns():
     root = Tk()
@@ -16,7 +19,7 @@ def get_columns():
     return tlf
 
 def send_sms(tlf: str, msg: str):
-    KEY = "5Zk57EmotZ2Rq4L4z7Lp2zwHZYPzzhcJ"
+    KEY = "Iq0kBwVCn9ii0ex14w87bA6LRcrl0uod"
     FROM = "HelpMyCar"
 
     TO = "34" + tlf
@@ -30,34 +33,39 @@ def send_sms(tlf: str, msg: str):
     sms_url = f"http://api.smsarena.es/http/sms.php?auth_key={KEY}&id={val}&from={FROM}&to={TO}&text={MESSAGE}"
 
     bal = requests.get(balance)
-    sms=1#sms = requests.get(sms_url)
+    sms = requests.get(sms_url)
 
     return bal.text, sms
     
 def main():
+    print(Fore.YELLOW + "Seleccione un archivo excel para analizar")
+    sleep(3)
     try:
         df = get_columns()
     except KeyError:
-        print(input("El archivo que ha intentado abrir no era el correcto.\nPulse Enter para cerrar."))
+        print(Fore.RED + "El archivo que ha intentado abrir no era el correcto.")
+        input("Pulse Enter para cerrar.")
         exit()
 
     msg = 'Buenos días,\n\nLe mandamos un mensaje desde nuestra compañía HelpMyCar\n' +\
-    'para comprar su "{car}". Si le interesa nuestra oferta' +\
-    'puede contactar con nostros en lmao@gmail.com.\n\nMuchas gracias.'
+    'para comprar su "{modelo}". Si le interesa nuestra oferta' +\
+    'puede contactar con nostros en ventas@helpmycar.es.\n\nMuchas gracias.'
 
     for k in range(len(df["Modelo"])):
-        send = msg.format(car=df["Modelo"][k])
-        r = send_sms("616160778", send)
+        send = msg.format(modelo=df["Modelo"][k])
+        r = send_sms(str(df["Teléfono"][k]), send)
         credit = int(float(r[0].replace("OK;", "")))
 
         if credit <= 100:
             if credit == 1:
-                print("Te queda solo 1 crédito.")
+                print(Fore.RED + "Te queda solo 1 crédito.")
             elif credit == 0:
-                print("Te has quedado sin créditos. Compra más en la página web.")
+                print(Fore.RED + "Te has quedado sin créditos. Compra más en la página web.")
                 break
             else:
-                print(f"CUIDADO!!! Te quedan {credit} créditos")
+                print(Fore.LIGHTRED_EX + f"CUIDADO!!! Te quedan {credit} créditos")
+    print(Fore.CYAN + "El programa ha finalizado.")
+    input("Pulse enter para cerrar")
     
 if __name__ == "__main__":
     main()
