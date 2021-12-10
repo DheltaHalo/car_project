@@ -47,12 +47,30 @@ def main():
         input("Pulse Enter para cerrar.")
         exit()
 
-    msg = 'Buenos días,\n\nLe mandamos un mensaje desde nuestra compañía HelpMyCar\n' +\
-    'para comprar su "{modelo}". Si le interesa nuestra oferta' +\
-    'puede contactar con nostros en ventas@helpmycar.es.\n\nMuchas gracias.'
+    msg = 'Hola, somos Automóviles Help My Car.\n\n'+\
+        'Como responsable del departamento de compras le informo'+\
+        'sobre nuestra Gestión de Venta para el vehículo que tiene anunciado.\n\n'+\
+        'HelpMyCar le adelanta de inmediato el 60% del valor del vehículo y el '+\
+        'resto hasta el total de su precio, cuando se haga la venta definitiva.\n\n'+\
+        'Venderemos el automóvil dentro del margen habitual, de 30 a 40 días, '+\
+        'por lo que no se tendría que preocupar de;\n'+\
+        'Los trámites de la venta o post-venta.\n'+\
+        'Gastos de transferencia e impuestos.\n'+\
+        'Responsabilidades como averías, vicios ocultos, etc...\n\n'+\
+        'Nuestro compromiso es tan grande que no cobramos nada hasta'+\
+        'que su coche se haya vendido, teniendo en cuenta que usted'+\
+        'está exento del pago de la comisión.\n\n'+\
+        'Para cualquier consulta y concretar cantidades, no dude en'+\
+        'ponerse en contacto con nosotros.\n\n'+\
+        'Atentamente,\n\n'+\
+        'Alberto Torres\n'+\
+        '911 229 127\n'+\
+        '674 343 184\n'+\
+        'www.helpmycar.es\n'+\
+        'https://www.dropbox.com/s/6oh80khe8no1adj/HELPMYCAR.mp4?dl=0'
 
     for k in range(len(df["Modelo"])):
-        send = msg.format(modelo=df["Modelo"][k])
+        send = msg
         r = send_sms(str(df["Teléfono"][k]), send)
         credit = int(float(r[0].replace("OK;", "")))
 
