@@ -39,7 +39,7 @@ def send_sms(tlf: str, msg: str):
     
 def main():
     print(Fore.YELLOW + "Seleccione un archivo excel para analizar")
-    sleep(3)
+    sleep(1)
     try:
         df = get_columns()
     except KeyError:
@@ -47,32 +47,20 @@ def main():
         input("Pulse Enter para cerrar.")
         exit()
 
-    msg = 'Hola, somos Automóviles Help My Car.\n\n'+\
-        'Como responsable del departamento de compras le informo'+\
-        'sobre nuestra Gestión de Venta para el vehículo que tiene anunciado.\n\n'+\
-        'HelpMyCar le adelanta de inmediato el 60% del valor del vehículo y el '+\
-        'resto hasta el total de su precio, cuando se haga la venta definitiva.\n\n'+\
-        'Venderemos el automóvil dentro del margen habitual, de 30 a 40 días, '+\
-        'por lo que no se tendría que preocupar de;\n'+\
-        'Los trámites de la venta o post-venta.\n'+\
-        'Gastos de transferencia e impuestos.\n'+\
-        'Responsabilidades como averías, vicios ocultos, etc...\n\n'+\
-        'Nuestro compromiso es tan grande que no cobramos nada hasta'+\
-        'que su coche se haya vendido, teniendo en cuenta que usted'+\
-        'está exento del pago de la comisión.\n\n'+\
-        'Para cualquier consulta y concretar cantidades, no dude en'+\
-        'ponerse en contacto con nosotros.\n\n'+\
+    msg = 'Hola, estamos interesados en tu coche. Te adelantamos el 60% de su valor y el resto hasta el total cuando se venda. Sin gastos ni comisiones.\n\n'+\
+        'Para concretar cantidades, no dude en contactar.\n\n'+\
         'Atentamente,\n\n'+\
         'Alberto Torres\n'+\
-        '911 229 127\n'+\
-        '674 343 184\n'+\
-        'www.helpmycar.es\n'+\
-        'https://www.dropbox.com/s/6oh80khe8no1adj/HELPMYCAR.mp4?dl=0'
+        '911229127\n'+\
+        '674343184\n'+\
+        'www.helpmycar.es\n\n'+\
+        'bit.ly/3ysixeb'
 
-    for k in range(len(df["Modelo"])):
+    for k in df["Teléfono"]:
         send = msg
-        r = send_sms(str(df["Teléfono"][k]), send)
+        r = send_sms(str(k), send)
         credit = int(float(r[0].replace("OK;", "")))
+        print(k)
 
         if credit <= 100:
             if credit == 1:
@@ -82,6 +70,8 @@ def main():
                 break
             else:
                 print(Fore.LIGHTRED_EX + f"CUIDADO!!! Te quedan {credit} créditos")
+
+    print(Fore.MAGENTA + f"Te quedan {credit} créditos\n")
     print(Fore.CYAN + "El programa ha finalizado.")
     input("Pulse enter para cerrar")
     
