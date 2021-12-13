@@ -60,8 +60,7 @@ def main():
         send = msg
         r = send_sms(str(k), send)
         credit = int(float(r[0].replace("OK;", "")))
-        print(k)
-
+        
         if credit <= 100:
             if credit == 1:
                 print(Fore.RED + "Te queda solo 1 crédito.")
