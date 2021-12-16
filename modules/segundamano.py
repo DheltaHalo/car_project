@@ -54,7 +54,8 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
             end = '");</script><script>window.__INITIAL_CONTEXT_VALUE'
 
             fixedtext = html[html.find(start)+len(start):html.rfind(end)].strip().replace('\\','').replace('": "{"',": {").replace('":"{"','":{"').replace('}"},','}},').replace('}"}','}}')
-
+            with open("test.txt", "w+") as file:
+                file.write(fixedtext)
             # We filter the data
             try:
                 data = json.loads(fixedtext)
@@ -83,7 +84,7 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
                 output.append(car)
                 keys_list = list(output[0].keys())
 
-            import_keys = ["marca", "title", "year", "phone", "isProfessional", "url"]
+            import_keys = ["marca", "title", "year", "phone", "isProfessional", "km", "url"]
 
             remove_key = []
 
