@@ -237,7 +237,7 @@ class FilterTab(QWidget):
         
         if km_sol != "":
             url += "&MaxKms=" + km_sol
-            name += "_km" + km_sol
+            name += "_kmMax" + km_sol
         
         print(url)
 
