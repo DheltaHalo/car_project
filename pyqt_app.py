@@ -22,7 +22,8 @@ from PyQt5.QtWidgets import (
     QProgressBar,
     QFileDialog,
     QMainWindow,
-    QApplication
+    QApplication,
+    QLineEdit
 )
 
 # Random classes
@@ -139,6 +140,11 @@ class FilterTab(QWidget):
         self.model_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.model_btn.setFont(QFont('Times', 15))
 
+        self.km_btn = QLineEdit()
+        self.km_btn.setPlaceholderText("Hasta x Kilómetros")
+        self.km_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self.km_btn.setFont(QFont('Times', 15))
+
         years_menu.triggered.connect(lambda action: self.years_btn.setText(action.text()))
         marca_menu.triggered.connect(lambda action: self.marca_btn.setText(action.text()))
         marca_menu.triggered.connect(self.model_button)
@@ -150,11 +156,12 @@ class FilterTab(QWidget):
         self.export_btn.setFont(QFont('Times', 15))
 
         # Grid properties
-        self.main_grid.addWidget(self.lbl, 0, 0, 1, 3)
+        self.main_grid.addWidget(self.lbl, 0, 0, 1, 4)
         self.main_grid.addWidget(self.years_btn, 1, 0)
         self.main_grid.addWidget(self.marca_btn, 1, 1)
         self.main_grid.addWidget(self.model_btn, 1, 2)
-        self.main_grid.addWidget(self.export_btn, 2, 0, 1, 3)
+        self.main_grid.addWidget(self.km_btn, 1, 3)
+        self.main_grid.addWidget(self.export_btn, 2, 0, 1, 4)
 
         self.setLayout(self.main_grid)
         self.show()
@@ -202,6 +209,7 @@ class FilterTab(QWidget):
         year_sol = self.years_btn.text()
         marca_sol = self.marca_btn.text()
         model_sol = self.model_btn.text()
+        km_sol = self.km_btn.text()
         txt = self.lbl.text()
 
         global url
@@ -226,6 +234,12 @@ class FilterTab(QWidget):
         if year_sol != "Año":
             url += self.year_str.format(year=year_sol)
             name += "_" + year_sol
+        
+        if km_sol != "":
+            url += "&MaxKms=" + km_sol
+            name += "_km" + km_sol
+        
+        print(url)
 
         name += ".xlsx"
         
