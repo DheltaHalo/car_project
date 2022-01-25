@@ -1,6 +1,7 @@
 import sys
 from time import sleep
 from threading import Thread
+from datetime import date
 import json
 
 import pandas as pd
@@ -85,15 +86,13 @@ class Worker1(QObject):
 class FilterTab(QWidget):
     def __init__(self, parent=None):
         super(FilterTab, self).__init__(parent)
-        self.parent().center(800, 350)
+        self.parent().center(1100, 350)
         self.create_lists()
         self.startUI()
     
     def create_lists(self):
-        n_pages = 1
-
         self.url = "https://www.coches.net/segunda-mano/"
-        max_year = 2021
+        max_year = int(date.today().year)
         min_year = 1971
 
         global main_dataframe
@@ -106,6 +105,8 @@ class FilterTab(QWidget):
 
         self.marca_list = [x.replace("_models", "") for x in self.models_frame]
         self.marca_list.insert(0, "Marca")
+
+        self.cambio_list = ["Automático", "Manual"]
         
     def startUI(self):
         self.main_grid = QGridLayout(self)
@@ -119,12 +120,11 @@ class FilterTab(QWidget):
         # We create the dropdown lists
         years_menu = QMenu(self)
         marca_menu = QMenu(self)
-
-        years = [x for x in self.year_list] 
-        marcas = [x for x in self.marca_list]
+        cambio_menu = QMenu(self)
         
-        create_menu(years, years_menu)
-        create_menu(marcas, marca_menu)
+        create_menu(self.year_list, years_menu)
+        create_menu(self.marca_list, marca_menu)
+        create_menu(self.cambio_list, cambio_menu)
 
         self.years_btn = QPushButton("Año")
         self.years_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
@@ -140,13 +140,19 @@ class FilterTab(QWidget):
         self.model_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.model_btn.setFont(QFont('Times', 15))
 
+        self.cambio_btn = QPushButton("Cambio")
+        self.cambio_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self.cambio_btn.setFont(QFont('Times', 15))
+        self.cambio_btn.setMenu(cambio_menu)
+
         self.km_btn = QLineEdit()
-        self.km_btn.setPlaceholderText("Hasta x Kilómetros")
+        self.km_btn.setPlaceholderText("Hasta x km")
         self.km_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.km_btn.setFont(QFont('Times', 15))
 
         years_menu.triggered.connect(lambda action: self.years_btn.setText(action.text()))
         marca_menu.triggered.connect(lambda action: self.marca_btn.setText(action.text()))
+        cambio_menu.triggered.connect(lambda action: self.cambio_btn.setText(action.text()))
         marca_menu.triggered.connect(self.model_button)
 
         # Final button
@@ -156,12 +162,13 @@ class FilterTab(QWidget):
         self.export_btn.setFont(QFont('Times', 15))
 
         # Grid properties
-        self.main_grid.addWidget(self.lbl, 0, 0, 1, 4)
+        self.main_grid.addWidget(self.lbl, 0, 0, 1, 5)
         self.main_grid.addWidget(self.years_btn, 1, 0)
         self.main_grid.addWidget(self.marca_btn, 1, 1)
         self.main_grid.addWidget(self.model_btn, 1, 2)
-        self.main_grid.addWidget(self.km_btn, 1, 3)
-        self.main_grid.addWidget(self.export_btn, 2, 0, 1, 4)
+        self.main_grid.addWidget(self.cambio_btn, 1,3)
+        self.main_grid.addWidget(self.km_btn, 1, 4)
+        self.main_grid.addWidget(self.export_btn, 2, 0, 1, 5)
 
         self.setLayout(self.main_grid)
         self.show()
@@ -206,9 +213,11 @@ class FilterTab(QWidget):
         path = str(QFileDialog.getExistingDirectory(self, "Select Directory"))
         path = path if path != "" else os.path.dirname(os.path.abspath(__file__))
         print(path)
+
         year_sol = self.years_btn.text()
         marca_sol = self.marca_btn.text()
         model_sol = self.model_btn.text()
+        cambio_sol = self.cambio_btn.text()
         km_sol = self.km_btn.text()
         txt = self.lbl.text()
 
@@ -234,10 +243,16 @@ class FilterTab(QWidget):
         if year_sol != "Año":
             url += self.year_str.format(year=year_sol)
             name += "_" + year_sol
+
+        if cambio_sol != "Cambio":
+            indx = self.cambio_list.index(cambio_sol)
+            url += f'&TransmissionTypeId={indx+1}'
+            name += "_" + cambio_sol
         
         if km_sol != "":
             url += "&MaxKms=" + km_sol
             name += "_kmMax" + km_sol
+        
         
         print(url)
 
@@ -325,7 +340,6 @@ class MenuTab(QWidget):
                 sleep(0.2)
 
         df = th.join()
-        print(df)
         
         df = pd.DataFrame(df)
         # df["phone"] = df["phone"].apply(pd.to_numeric)

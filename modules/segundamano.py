@@ -1,4 +1,5 @@
 import os
+from numpy import NaN
 import pandas as pd
 import dropbox
 from time import sleep
@@ -54,8 +55,6 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
             end = '");</script><script>window.__INITIAL_CONTEXT_VALUE'
 
             fixedtext = html[html.find(start)+len(start):html.rfind(end)].strip().replace('\\','').replace('": "{"',": {").replace('":"{"','":{"').replace('}"},','}},').replace('}"}','}}')
-            with open("test.txt", "w+") as file:
-                file.write(fixedtext)
             # We filter the data
             try:
                 data = json.loads(fixedtext)
@@ -95,6 +94,9 @@ def get_url(path: str, url: str, n_pages: int, html_bool: bool = False):
                     else:
                         if key == "title":
                             val["marca"] = val[key].split(" ")[0]
+
+                if val.get("km") == None:
+                    val["km"] = -1
 
                 output[n] = {k: val[k] for k in import_keys}
 
