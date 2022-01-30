@@ -9,7 +9,7 @@ import pandas as pd
 import os
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-from modules import segundamano as sg
+from modules import milanuncios as sg
 
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtCore import QObject, pyqtSignal, Qt, QThread, QTimer, QEventLoop
@@ -91,22 +91,26 @@ class FilterTab(QWidget):
         self.startUI()
     
     def create_lists(self):
-        self.url = "https://www.coches.net/segunda-mano/"
+        self.url = 'https://www.milanuncios.com/coches-de-segunda-mano/'
         max_year = int(date.today().year)
         min_year = 1971
 
-        global main_dataframe
-        main_dataframe = sg.create_files()
-        self.models_frame = main_dataframe["models"]
-
-        self.year_str = "&MaxYear={year}&MinYear={year}"
-        self.year_list = [str(x) for x in range(min_year, max_year + 1)]
+        self.year_str = "&anod={year}&anoh={year}"
+        self.year_list = [str(x) for x in range(1900, 1980 + 1, 10)]
+        self.year_list.extend(["1985", "1990"])
+        self.year_list.extend([str(x) for x in range(1991, max_year + 1)])
         self.year_list.insert(0, "Año")
 
-        self.marca_list = [x.replace("_models", "") for x in self.models_frame]
+        global main_dataframe
+        main_dataframe = sg.create_files()
+
+        self.marca_list = [x for x in main_dataframe['models']]
         self.marca_list.insert(0, "Marca")
 
+        self.models_frame = main_dataframe["models"]
+
         self.cambio_list = ["Automático", "Manual"]
+        self.cambio_list_url = ["automatico", "manual"]
         
     def startUI(self):
         self.main_grid = QGridLayout(self)
@@ -182,7 +186,7 @@ class FilterTab(QWidget):
         self.lbl.setStyleSheet("color: black")
 
         try:
-            models = self.models_frame[f'{marca}']
+            models = [x for x in self.models_frame[f'{marca}']['models']]
             models.sort()
             models.insert(0, "Modelo")
             models = drop_duplicates(models)
@@ -224,21 +228,19 @@ class FilterTab(QWidget):
         global url
         url = self.url
         global name
-        name = "\\car_data"
-        # global df2
-        # df2 = main_dataframe["main"]
+        name = "\\milanuncios"
+
+        url += '?nextToken=eyJkaXIiOiJmIiwiaWQiOiI0MzQ3MTczNTIiLCJkYXRlIjoxNjM5NzQ5MTM3MDAwLCJwcmljZSI6MTEwMDAsImN1cnJlbnRQYWdlIjoxfQ%3D%3D'+\
+            '&vendedor=part'+\
+            '&orden=date'
 
         if marca_sol != "Marca":
-            url += marca_sol.replace(" ", "_") + "/"
+            url += f'&marca={main_dataframe["models"][marca_sol]["id"]}'
             name += "_" + marca_sol
-            # df2 = sg.filter(df2, "marca", marca_sol.split("_")[0])
 
         if model_sol != "Modelo":
-            url += model_sol.replace(" ", "_") + "/"
-            name += "_" + model_sol 
-            # df2 = sg.filter(df2, "marca", marca_sol)
-
-        url += "?st=2"
+            url += f'&modelo={main_dataframe["models"][marca_sol]["models"][model_sol]}'
+            name += "_" + model_sol
 
         if year_sol != "Año":
             url += self.year_str.format(year=year_sol)
@@ -246,16 +248,13 @@ class FilterTab(QWidget):
 
         if cambio_sol != "Cambio":
             indx = self.cambio_list.index(cambio_sol)
-            url += f'&TransmissionTypeId={indx+1}'
+            url += f'&cajacambio={self.cambio_list_url[indx]}'
             name += "_" + cambio_sol
         
         if km_sol != "":
-            url += "&MaxKms=" + km_sol
+            url += "&kilometersTo=" + km_sol
             name += "_kmMax" + km_sol
         
-        
-        print(url)
-
         name += ".xlsx"
         
         self.close()
@@ -312,7 +311,8 @@ class MenuTab(QWidget):
         self.worker.progress.connect(self.change_text)
 
         # We start the threads
-        df = ThreadReturn(target=sg.get_url, args=("", url, 10, True,))
+        print(url)
+        df = ThreadReturn(target=sg.main, args=(url,))
         th = Thread(target=self.check_frame, args=(df,))
         df.start()
         th.start()
@@ -340,14 +340,12 @@ class MenuTab(QWidget):
                 sleep(0.2)
 
         df = th.join()
-        
+        df.pop('price', None)
         df = pd.DataFrame(df)
-        # df["phone"] = df["phone"].apply(pd.to_numeric)
-        # df = pd.concat([df, df2])
-        df = sg.clean(df)
+
         print(path)
         print(name)
-
+        print(df)
         df.to_excel(path + name, index=False)
         
         self.change_text_thread.start()
