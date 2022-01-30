@@ -27,6 +27,8 @@ from PyQt5.QtWidgets import (
     QLineEdit
 )
 
+# Icon by Flaticon (link: 'https://www.flaticon.com/free-icons/shapes-and-symbols')
+
 # Random classes
 class ThreadReturn(Thread):
     """
