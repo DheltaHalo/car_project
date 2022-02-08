@@ -256,7 +256,7 @@ class FilterTab(QWidget):
         
         print(url)
 
-        name += ".xlsx"
+        name += ".csv"
         
         self.close()
         self.parent().startMenuTab()
@@ -348,7 +348,7 @@ class MenuTab(QWidget):
         print(path)
         print(name)
 
-        df.to_excel(path + name, index=False)
+        df.to_csv(path + name, index=False)
         
         self.change_text_thread.start()
 
