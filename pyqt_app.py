@@ -3,6 +3,7 @@ from time import sleep
 from threading import Thread
 from datetime import date
 import json
+from numpy import min_scalar_type
 
 import pandas as pd
 
@@ -86,7 +87,7 @@ class Worker1(QObject):
 class FilterTab(QWidget):
     def __init__(self, parent=None):
         super(FilterTab, self).__init__(parent)
-        self.parent().center(1100, 350)
+        self.parent().center(1200, 350)
         self.create_lists()
         self.startUI()
     
@@ -99,7 +100,7 @@ class FilterTab(QWidget):
         main_dataframe = sg.create_files()
         self.models_frame = main_dataframe["models"]
 
-        self.year_str = "&MaxYear={year}&MinYear={year}"
+        self.year_str = "&MaxYear={year_max}&MinYear={year_min}"
         self.year_list = [str(x) for x in range(min_year, max_year + 1)]
         self.year_list.insert(0, "Año")
 
@@ -118,18 +119,22 @@ class FilterTab(QWidget):
         self.lbl.setFont(QFont('Times', 18))
 
         # We create the dropdown lists
-        years_menu = QMenu(self)
+        min_year_menu = QMenu(self)
         marca_menu = QMenu(self)
         cambio_menu = QMenu(self)
         
-        create_menu(self.year_list, years_menu)
+        create_menu(self.year_list, min_year_menu)
         create_menu(self.marca_list, marca_menu)
         create_menu(self.cambio_list, cambio_menu)
 
-        self.years_btn = QPushButton("Año")
-        self.years_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
-        self.years_btn.setFont(QFont('Times', 15))
-        self.years_btn.setMenu(years_menu)
+        self.min_years_btn = QPushButton("Año")
+        self.min_years_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self.min_years_btn.setFont(QFont('Times', 15))
+        self.min_years_btn.setMenu(min_year_menu)
+
+        self.max_years_btn = QPushButton("Hasta")
+        self.max_years_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self.max_years_btn.setFont(QFont('Times', 15))      
 
         self.marca_btn = QPushButton("Marca")
         self.marca_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
@@ -150,10 +155,11 @@ class FilterTab(QWidget):
         self.km_btn.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
         self.km_btn.setFont(QFont('Times', 15))
 
-        years_menu.triggered.connect(lambda action: self.years_btn.setText(action.text()))
+        min_year_menu.triggered.connect(lambda action: self.min_years_btn.setText(action.text()))
         marca_menu.triggered.connect(lambda action: self.marca_btn.setText(action.text()))
         cambio_menu.triggered.connect(lambda action: self.cambio_btn.setText(action.text()))
         marca_menu.triggered.connect(self.model_button)
+        min_year_menu.triggered.connect(self.max_year_button)
 
         # Final button
         self.export_btn = QPushButton("Exportar")
@@ -162,13 +168,14 @@ class FilterTab(QWidget):
         self.export_btn.setFont(QFont('Times', 15))
 
         # Grid properties
-        self.main_grid.addWidget(self.lbl, 0, 0, 1, 5)
-        self.main_grid.addWidget(self.years_btn, 1, 0)
-        self.main_grid.addWidget(self.marca_btn, 1, 1)
-        self.main_grid.addWidget(self.model_btn, 1, 2)
-        self.main_grid.addWidget(self.cambio_btn, 1,3)
-        self.main_grid.addWidget(self.km_btn, 1, 4)
-        self.main_grid.addWidget(self.export_btn, 2, 0, 1, 5)
+        self.main_grid.addWidget(self.lbl, 0, 0, 1, 6)
+        self.main_grid.addWidget(self.min_years_btn, 1, 0)
+        self.main_grid.addWidget(self.max_years_btn, 1, 1)
+        self.main_grid.addWidget(self.marca_btn, 1, 2)
+        self.main_grid.addWidget(self.model_btn, 1, 3)
+        self.main_grid.addWidget(self.cambio_btn, 1,4)
+        self.main_grid.addWidget(self.km_btn, 1, 5)
+        self.main_grid.addWidget(self.export_btn, 2, 0, 1, 6)
 
         self.setLayout(self.main_grid)
         self.show()
@@ -177,25 +184,26 @@ class FilterTab(QWidget):
         model_menu = QMenu(self)
         marca = self.marca_btn.text()
         model_text = "Modelo"
+        
+        models = self.models_frame[f'{marca}']
+        models.sort()
+        models.insert(0, "Modelo")
+        models = drop_duplicates(models)
 
-        self.lbl.setText("Filtrar")
-        self.lbl.setStyleSheet("color: black")
+        create_menu(models, model_menu)
 
-        try:
-            models = self.models_frame[f'{marca}']
-            models.sort()
-            models.insert(0, "Modelo")
-            models = drop_duplicates(models)
+        self.model_btn.setMenu(model_menu)
+        model_menu.triggered.connect(lambda action: self.model_btn.setText(action.text()))
 
-            create_menu(models, model_menu)
+    def max_year_button(self):
+        max_year_menu = QMenu(self)
+        min_year = self.min_years_btn.text()
 
-            self.model_btn.setMenu(model_menu)
-            model_menu.triggered.connect(lambda action: self.model_btn.setText(action.text()))
-
-        except KeyError:
-            create_menu([model_text], model_menu)
-            self.model_btn.setMenu(model_menu)
-            self.model_btn.setText(model_text)
+        max_year_list = self.year_list[self.year_list.index(min_year):]
+        max_year_list.insert(0, "Hasta")
+        create_menu(max_year_list, max_year_menu)
+        self.max_years_btn.setMenu(max_year_menu)
+        max_year_menu.triggered.connect(lambda action: self.max_years_btn.setText(action.text()))
 
     def change_text(self, n):
         """
@@ -214,7 +222,8 @@ class FilterTab(QWidget):
         path = path if path != "" else os.path.dirname(os.path.abspath(__file__))
         print(path)
 
-        year_sol = self.years_btn.text()
+        min_year_sol = self.min_years_btn.text()
+        max_year_sol = self.max_years_btn.text()
         marca_sol = self.marca_btn.text()
         model_sol = self.model_btn.text()
         cambio_sol = self.cambio_btn.text()
@@ -225,24 +234,25 @@ class FilterTab(QWidget):
         url = self.url
         global name
         name = "\\car_data"
-        # global df2
-        # df2 = main_dataframe["main"]
 
         if marca_sol != "Marca":
             url += marca_sol.replace(" ", "_") + "/"
             name += "_" + marca_sol
-            # df2 = sg.filter(df2, "marca", marca_sol.split("_")[0])
 
         if model_sol != "Modelo":
             url += model_sol.replace(" ", "_") + "/"
             name += "_" + model_sol 
-            # df2 = sg.filter(df2, "marca", marca_sol)
 
         url += "?st=2"
 
-        if year_sol != "Año":
-            url += self.year_str.format(year=year_sol)
-            name += "_" + year_sol
+        if min_year_sol != "Año":
+            if max_year_sol != "Hasta":
+                url += self.year_str.format(year_max=max_year_sol, year_min=min_year_sol)
+                name += f'_{min_year_sol}-{max_year_sol}'
+            
+            else:
+                url += self.year_str.format(year_max=min_year_sol, year_min=min_year_sol)
+                name += f'_{min_year_sol}'
 
         if cambio_sol != "Cambio":
             indx = self.cambio_list.index(cambio_sol)
@@ -257,9 +267,12 @@ class FilterTab(QWidget):
         print(url)
 
         name += ".csv"
+
+        global button_window_epic
+        button_window_epic = self.parent().ButtonWindow
         
-        self.close()
         self.parent().startMenuTab()
+        self.hide()
 
 class MenuTab(QWidget):
     """
@@ -267,9 +280,6 @@ class MenuTab(QWidget):
     """
     def __init__(self, parent=None):
         super(MenuTab, self).__init__(parent)
-        self.width = 300
-        self.height = 150
-        self.parent().center(self.width, self.height)
         self.startUI()
 
     def startUI(self):
@@ -312,7 +322,7 @@ class MenuTab(QWidget):
         self.worker.progress.connect(self.change_text)
 
         # We start the threads
-        df = ThreadReturn(target=sg.get_url, args=("", url, 10, True,))
+        df = ThreadReturn(target=sg.get_url, args=("", url, 1, True,))
         th = Thread(target=self.check_frame, args=(df,))
         df.start()
         th.start()
@@ -356,8 +366,8 @@ class MenuTab(QWidget):
         """
         Swaps the window
         """
-        self.close()
         self.parent().startFilterTab()
+        self.close()
 
 class MainWindow(QMainWindow):
     def __init__(self, parent=None):
@@ -366,15 +376,19 @@ class MainWindow(QMainWindow):
         self.startFilterTab()
     
     def startFilterTab(self):
-        self.Window = FilterTab(self)
-        self.setWindowTitle("Filtrar")
-        self.setCentralWidget(self.Window)
-        self.show()
-    
+        if hasattr(self, 'ButtonWindow'):
+            self.ButtonWindow.show()
+            self.center(1200, 350)
+        else:
+            self.ButtonWindow = FilterTab(self)
+            self.setWindowTitle("Filtrar")
+            self.setCentralWidget(self.ButtonWindow)
+            self.show()
+        
     def startMenuTab(self):
         self.Window = MenuTab(self)
+        self.center(300, 150)
         self.setWindowTitle("Menu")
-        self.setCentralWidget(self.Window)
         self.show()
     
     def center(self, app_h: int, app_w: int):
