@@ -233,7 +233,7 @@ class FilterTab(QWidget):
         global url
         url = self.url
         global name
-        name = "\\car_data"
+        name = "car_data"
 
         if marca_sol != "Marca":
             url += marca_sol.replace(" ", "_") + "/"
@@ -357,8 +357,9 @@ class MenuTab(QWidget):
         df = sg.clean(df)
         print(path)
         print(name)
-
-        df.to_csv(path + name, index=False)
+        full_path = os.path.join(path, name)
+        print(full_path)
+        df.to_csv(full_path, index=False)
         
         self.change_text_thread.start()
 
